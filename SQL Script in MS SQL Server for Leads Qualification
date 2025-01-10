@@ -1,0 +1,64 @@
+-- SQL Script in MS SQL Server for Leads Qualification:  
+		   
+SELECT     l.LeadNumber,
+           a.Region,
+           a.TerrShortName,
+           'AQL'             AS [Action],
+           l.[CreatedOnDate] AS [Time]
+FROM       [CorpCRM].[dbo].[vPTC_CRM_Lead] l WITH (NOLOCK)
+INNER JOIN DataMart.dbo.AccountMart a WITH (NOLOCK)
+ON         l.ParentAccountID=a.AccountID
+WHERE      l.[CreatedOnDate]>='01/01/2018'
+AND        l.[CreatedOnDate] IS NOT NULL
+AND        l.LeadGeneratedBy IN ('Marketing',
+                                 'System')
+AND        a.Region IN ('UK Region 1',
+                        'UK Region 2',
+                        'UK Region 3',
+                        'INTL Region 01 - DIRECT',
+                        'AU Region')
+						
+UNION ALL
+
+SELECT     l.LeadNumber,
+           a.Region,
+           a.TerrShortName,
+           'MQL'                      AS [Action],
+           l.[DateTransferredToSales] AS [Time]
+FROM       [CorpCRM].[dbo].[vPTC_CRM_Lead] l WITH (NOLOCK)
+INNER JOIN DataMart.dbo.AccountMart a WITH (NOLOCK)
+ON         l.ParentAccountID=a.AccountID
+WHERE      l.[CreatedOnDate]>='01/01/2018'
+AND        l.[DateTransferredToSales] IS NOT NULL
+AND        l.LeadGeneratedBy IN ('Marketing',
+                                 'System')
+AND        a.Region IN ('UK Region 1',
+                        'UK Region 2',
+                        'UK Region 3',
+                        'INTL Region 01 - DIRECT',
+                        'AU Region')
+AND        l.[LeadStatus] NOT LIKE '%INTL - Open%'
+AND        l.[LeadStatus] NOT LIKE '%MKTG%'
+AND        l.[LeadStatus] NOT LIKE '%MTKG%'
+AND        l.[LeadStatus] NOT LIKE '%Close -%'
+
+UNION ALL
+
+SELECT     l.LeadNumber,
+           a.Region,
+           a.TerrShortName,
+           'SQL'                  AS [Action],
+           l.[SalesQualifiedDate] AS [Time]
+FROM       [CorpCRM].[dbo].[vPTC_CRM_Lead] l WITH (NOLOCK)
+INNER JOIN DataMart.dbo.AccountMart a WITH (NOLOCK)
+ON         l.ParentAccountID=a.AccountID
+WHERE      l.[CreatedOnDate]>='01/01/2018'
+AND        l.[SalesQualifiedDate] IS NOT NULL
+AND        l.LeadGeneratedBy IN ('Marketing',
+                                 'System')
+AND        a.Region IN ('UK Region 1',
+                        'UK Region 2',
+                        'UK Region 3',
+                        'INTL Region 01 - DIRECT',
+                        'AU Region')
+AND        l.[LeadStatus]<>'Unqualified'
