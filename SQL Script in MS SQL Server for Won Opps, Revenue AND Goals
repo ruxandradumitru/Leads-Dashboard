@@ -1,0 +1,61 @@
+-- SQL Script in MS SQL Server for Won Opps, Revenue AND Goals:
+
+SELECT   a.TerrShortName                               AS [TerrShortName],
+         'RevenueUSD'                                  AS [Type],
+         a.Region                                      AS [Region],
+         CONVERT(VARCHAR(10), o.[ActualCloseDate], 23) AS [Time],
+         SUM(
+         CASE o.OpportunityState
+                  WHEN 'Won' THEN 1
+                  ELSE 0
+         END) AS [WonOpps],
+         SUM(
+         CASE
+                  WHEN o.TrxCurrencyCode LIKE '%GBP%' THEN o.ActualRevenueAmt*1.3071
+                  WHEN o.TrxCurrencyCode LIKE '%AUD%' THEN o.ActualRevenueAmt*0.6872
+                  WHEN o.TrxCurrencyCode LIKE '%EUR%' THEN o.ActualRevenueAmt*1.19
+                  ELSE o.ActualRevenueAmt
+         END) AS [Amount USD]
+FROM     [CorpCRM].[dbo].[vPTC_CRM_Opportunity] o WITH (NOLOCK)
+JOIN     DataMart.dbo.AccountMart a
+ON       o.accountid=a.accountid
+JOIN     [CorpCRM].[dbo].[vPTC_CRM_Lead] l
+ON       o.OriginatingLeadID=l.LeadID
+WHERE    a.Region IN ('UK Region 1',
+                      'UK Region 2',
+                      'UK Region 3',
+                      'INTL Region 01 - DIRECT',
+                      'AU Region')
+AND      l.LeadGeneratedBy IN ('Marketing',
+                               'System')
+AND      l.[CreatedOnDate]>='01/01/2018'
+AND      o.[ActualCloseDate] IS NOT NULL
+AND      o.[ActualRevenueAmt] IS NOT NULL
+AND      o.[OpportunityState] IS NOT NULL
+GROUP BY a.Region,
+         a.TerrShortName,
+         o.OpportunityNumber,
+         o.ActualCloseDate,
+         o.ActualRevenueAmt,
+         o.TrxCurrencyCode
+UNION ALL
+SELECT   t.TerrShortName AS [TerrShortName],
+         'GoalUSD'       AS [Type],
+         t.Region        AS [Region],
+         CONVERT(DATE, CONVERT(VARCHAR(8), s.[CalendarMonth]+'01', 112) as [Time], SUM(
+         CASE t.TerrShortName
+                  WHEN 'Whatever' THEN 1
+                  ELSE NULL
+         END) AS [Extracolumn], SUM(
+         CASE
+                  WHEN t.Region LIKE '%UK%' THEN s.GoalAmt       *1.3071
+                  WHEN t.Region LIKE '%AU Region%' THEN s.GoalAmt*0.6872
+                  ELSE s.GoalAmt
+         END) AS [AmountUSD] FROM CorpDW.dbo.SalesGoal s WITH (NOLOCK)
+JOIN     DataMart.dbo.TerritoryMart t
+ON       s.TerrID=t.TerrID WHERE PlanYear='2020'
+AND      t.Region IN ('UK Region 1',
+                      'UK Region 2',
+                      'UK Region 3',
+                      'INTL Region 01 - DIRECT',
+                      'AU Region') GROUP BY t.Region, t.TerrShortName, s.CalendarMonth, s.GoalAmt
