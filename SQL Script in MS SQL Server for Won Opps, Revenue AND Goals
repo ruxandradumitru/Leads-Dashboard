@@ -1,8 +1,8 @@
 -- SQL Script in MS SQL Server for Won Opps, Revenue AND Goals:
 
-SELECT   a.TerrShortName                               AS [TerrShortName],
-         'RevenueUSD'                                  AS [Type],
-         a.Region                                      AS [Region],
+SELECT   a.TerrShortName AS [TerrShortName],
+         'RevenueUSD' AS [Type],
+         a.Region AS [Region],
          CONVERT(VARCHAR(10), o.[ActualCloseDate], 23) AS [Time],
          SUM(
          CASE o.OpportunityState
